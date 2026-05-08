@@ -85,12 +85,12 @@ function json(body: unknown) {
 }
 
 describe('App', () => {
-  it('renders the integrated learner workspace by default', async () => {
+  it('lands admin users in the operations workspace by default', async () => {
     render(<App />)
 
-    expect(await screen.findByRole('banner', { name: /Think Together training MVP/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Welcome/i })).toBeInTheDocument()
-    expect(screen.getByText('Program Induction - PBIS')).toBeInTheDocument()
+    expect(await screen.findByRole('navigation', { name: /MVP workspace/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Admin' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('heading', { name: 'Training Operations Dashboard' })).toBeInTheDocument()
   })
 
   it('switches between learner, coach, admin, and plan views', async () => {
@@ -141,7 +141,8 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'Welcome, Real Learner' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Program Induction - PBIS' })).toBeInTheDocument()
+    expect(screen.getByText('Real Learner')).toBeInTheDocument()
     expect(screen.getByText('Palm Site')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument()
     await waitFor(() => {
@@ -190,7 +191,8 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
     fireEvent.click(screen.getByRole('button', { name: 'Accept invite' }))
 
-    expect(await screen.findByRole('heading', { name: 'Welcome, Invited Learner' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Program Induction - PBIS' })).toBeInTheDocument()
+    expect(screen.getAllByText('Invited Learner').length).toBeGreaterThan(0)
     expect(window.localStorage.getItem('think-training-token')).toBe('learner-token')
     expect(fetchMock.mock.calls[0][0]).toBe('/api/auth/accept-invite')
   })

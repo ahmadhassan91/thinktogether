@@ -48,12 +48,12 @@ describe('LearnerFlow', () => {
   it('renders welcome verification and learning path progress', () => {
     render(<LearnerFlow learner={learner} modules={modules} />)
 
-    expect(screen.getByRole('heading', { name: /welcome, avery chen/i })).toBeInTheDocument()
-    expect(screen.getByText(/program induction - pbis/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /program induction - pbis/i })).toBeInTheDocument()
+    expect(screen.getByText('Avery Chen')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /verify and start/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start training/i }))
 
-    expect(screen.getByText('Progress: 0 of 2 required modules complete')).toBeInTheDocument()
+    expect(screen.getByText('0 of 2 required modules complete')).toBeInTheDocument()
     expect(screen.getByText(/Current/)).toBeInTheDocument()
     expect(screen.getByText(/Locked/)).toBeInTheDocument()
   })
@@ -61,7 +61,7 @@ describe('LearnerFlow', () => {
   it('submits a quiz, advances to practice, and shows a completion receipt', async () => {
     render(<LearnerFlow learner={learner} modules={modules} pathTitle="Program Induction - PBIS" />)
 
-    fireEvent.click(screen.getByRole('button', { name: /verify and start/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start training/i }))
     fireEvent.click(screen.getByLabelText('Consistent support'))
     fireEvent.click(screen.getByRole('button', { name: /submit answer/i }))
 
@@ -91,7 +91,7 @@ describe('LearnerFlow', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /verify and start/i }))
+    fireEvent.click(screen.getByRole('button', { name: /start training/i }))
     fireEvent.click(screen.getByLabelText('Surprise consequences'))
     fireEvent.click(screen.getByRole('button', { name: /submit answer/i }))
 

@@ -169,12 +169,19 @@ export function AdminDashboard({
       ] as const)
 
   return (
-    <section style={{ color: '#1d2430', fontFamily: 'system-ui, sans-serif', padding: '2rem', textAlign: 'left' }}>
+    <section
+      style={{
+        color: '#1d2430',
+        fontFamily: 'system-ui, sans-serif',
+        padding: 'clamp(1rem, 4vw, 2rem)',
+        textAlign: 'left',
+      }}
+    >
       <header style={{ marginBottom: '1.5rem' }}>
         <p style={{ color: '#5b6675', fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>
           Think Together admin MVP
         </p>
-        <h1 style={{ fontSize: '2rem', letterSpacing: 0, margin: '0.25rem 0 0' }}>
+        <h1 style={{ fontSize: 'clamp(1.55rem, 6vw, 2rem)', letterSpacing: 0, lineHeight: 1.05, margin: '0.25rem 0 0' }}>
           Training Operations Dashboard
         </h1>
       </header>

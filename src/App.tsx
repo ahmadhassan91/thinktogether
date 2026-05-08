@@ -27,7 +27,6 @@ import {
   type LearnerProfile,
   type ProgressPayload,
 } from './api/client'
-import { BrandHeader, type BrandHeaderMode } from './components/BrandHeader'
 import { StatusChip } from './components/StatusChip'
 import { getMilestonesByPhase } from './data/mvpMilestones'
 import { AdminDashboard } from './features/admin/AdminDashboard'
@@ -93,6 +92,7 @@ function App() {
         const me = await getMe()
         setUser(me.user)
         setLearner(me.user.role === 'learner' ? toLearnerIdentity(me.user, me.learner ?? undefined) : null)
+        setView(me.user.role === 'admin' ? 'admin' : 'learner')
         await refreshWorkspace(me.user)
       } catch (caught) {
         setLoadError(caught instanceof Error ? caught.message : 'Unable to load workspace.')
@@ -105,8 +105,8 @@ function App() {
   const learnerModules = useMemo(() => (content ? toLearnerModules(content) : []), [content])
   const coachScenario = useMemo(() => (content ? toCoachScenario(content) : null), [content])
 
-  const brandMode: BrandHeaderMode = view === 'admin' ? 'admin' : 'learner'
   const visibleNavItems = user?.role === 'admin' ? navItems : navItems.filter((item) => item.view !== 'admin')
+  const activeViewLabel = navItems.find((item) => item.view === view)?.label ?? 'Workspace'
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -117,7 +117,7 @@ function App() {
       const me = auth.user.role === 'learner' ? await getMe() : { user: auth.user }
       setUser(me.user)
       setLearner(me.user.role === 'learner' ? toLearnerIdentity(me.user, me.learner ?? undefined) : null)
-      setView('learner')
+      setView(me.user.role === 'admin' ? 'admin' : 'learner')
       await refreshWorkspace(me.user)
     } catch (caught) {
       setAuthError(caught instanceof Error ? caught.message : 'Unable to sign in.')
@@ -225,59 +225,54 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <BrandHeader
-        mode={brandMode}
-        showAdminMode={user.role === 'admin'}
-        onModeChange={(mode) => setView(mode === 'admin' && user.role === 'admin' ? 'admin' : 'learner')}
-      />
-
-      <section className="app-hero" aria-label="MVP summary">
-        <div>
-          <p className="app-hero__label">Program Induction PBIS MVP</p>
-          <h2>Mobile training, practice coaching, and clearance reporting in one demo.</h2>
-          <p>
-            Built around Think Together artifacts: SOPs, PBIS decks, knowledge checks,
-            weekly induction rhythm, and import/export-first admin operations.
-          </p>
-        </div>
-        <div className="app-hero__stats" aria-label="MVP scope">
+    <div className="app-shell app-shell--workspace">
+      <aside className="app-sidebar" aria-label="Workspace navigation">
+        <div className="app-sidebar__brand">
+          <div className="app-sidebar__logo" aria-hidden="true">TT</div>
           <div>
-            <strong>{content.modules.length}</strong>
-            <span>PBIS modules</span>
-          </div>
-          <div>
-            <strong>{content.scenarios.length}</strong>
-            <span>scenario seeds</span>
-          </div>
-          <div>
-            <strong>19</strong>
-            <span>delivery milestones</span>
+            <p>Think Together</p>
+            <strong>Training Operations</strong>
           </div>
         </div>
-      </section>
 
-      <nav className="app-tabs" aria-label="MVP workspace">
-        {visibleNavItems.map((item) => (
-          <button
-            aria-current={view === item.view ? 'page' : undefined}
-            className="app-tabs__button"
-            data-active={view === item.view}
-            key={item.view}
-            onClick={() => setView(item.view === 'admin' && user.role !== 'admin' ? 'learner' : item.view)}
-            type="button"
-          >
-            {item.label}
+        <nav className="app-sidebar__nav" aria-label="MVP workspace">
+          {visibleNavItems.map((item) => (
+            <button
+              aria-current={view === item.view ? 'page' : undefined}
+              className="app-sidebar__nav-button"
+              data-active={view === item.view}
+              key={item.view}
+              onClick={() => setView(item.view === 'admin' && user.role !== 'admin' ? 'learner' : item.view)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="app-sidebar__account">
+          <span>{user.role === 'admin' ? 'Admin workspace' : 'Learner workspace'}</span>
+          <strong>{user.name}</strong>
+          <button className="logout-button" onClick={handleLogout} type="button">
+            Sign out
           </button>
-        ))}
-      </nav>
+        </div>
+      </aside>
 
-      <button className="logout-button" onClick={handleLogout} type="button">
-        Sign out {user.name}
-      </button>
+      <main className="workspace-main">
+        <header className="workspace-topbar">
+          <div>
+            <p className="app-hero__label">{user.role === 'admin' ? 'Operations dashboard' : 'Program Induction PBIS'}</p>
+            <h1>{activeViewLabel}</h1>
+          </div>
+          <div className="workspace-topbar__meta" aria-label="Training scope">
+            <span>{content.modules.length} modules</span>
+            <span>{content.scenarios.length} scenarios</span>
+          </div>
+        </header>
 
-      <div className="app-content">
-        {renderView({
+        <div className="app-content">
+          {renderView({
           view,
           learnerModules,
           coachScenario,
@@ -332,8 +327,9 @@ function App() {
             setAdminLearners((items) => items.map((item) => (item.id === learnerId ? revokePayload.learner : item)))
           },
           onDownloadExport: downloadAdminExport,
-        })}
-      </div>
+          })}
+        </div>
+      </main>
     </div>
   )
 }

@@ -196,47 +196,63 @@ export function LearnerFlow({
 
   if (!verified) {
     return (
-      <main aria-labelledby="welcome-title">
-        <h1 id="welcome-title">Welcome, {learner.name}</h1>
-        <p>{pathTitle}</p>
-        <dl>
-          <div>
-            <dt>Role</dt>
-            <dd>{learner.role ?? 'Learner'}</dd>
+      <main className="learner-home" aria-labelledby="welcome-title">
+        <section className="learner-home__primary">
+          <p className="app-hero__label">Assigned training</p>
+          <h1 id="welcome-title">Program Induction - PBIS</h1>
+          <p>
+            Start with the next required module, then use practice coaching to rehearse
+            real site situations before clearance reporting.
+          </p>
+          <div className="learner-home__actions">
+            <button type="button" onClick={() => setVerified(true)}>
+              Start training
+            </button>
+            <span>{requiredCount} required modules</span>
           </div>
-          <div>
-            <dt>Region</dt>
-            <dd>{learner.region ?? 'Assigned region'}</dd>
-          </div>
-          <div>
-            <dt>Site</dt>
-            <dd>{learner.site ?? 'Assigned site'}</dd>
-          </div>
-        </dl>
-        <button type="button" onClick={() => setVerified(true)}>
-          Verify and start
-        </button>
+        </section>
+
+        <aside className="learner-home__profile" aria-label="Learner assignment">
+          <strong>{learner.name}</strong>
+          <dl>
+            <div>
+              <dt>Role</dt>
+              <dd>{learner.role ?? 'Learner'}</dd>
+            </div>
+            <div>
+              <dt>Region</dt>
+              <dd>{learner.region ?? 'Assigned region'}</dd>
+            </div>
+            <div>
+              <dt>Site</dt>
+              <dd>{learner.site ?? 'Assigned site'}</dd>
+            </div>
+          </dl>
+        </aside>
       </main>
     )
   }
 
   return (
-    <main aria-labelledby="path-title">
-      <header>
-        <h1 id="path-title">{pathTitle}</h1>
+    <main className="learner-workspace" aria-labelledby="path-title">
+      <header className="learner-workspace__header">
+        <div>
+          <p className="app-hero__label">Required learning path</p>
+          <h1 id="path-title">{pathTitle}</h1>
+        </div>
         <p>
-          Progress: {completeCount} of {requiredCount} required modules complete
+          {completeCount} of {requiredCount} required modules complete
         </p>
       </header>
 
-      <section aria-label="Learning path">
+      <section className="module-rail" aria-label="Learning path">
         <ol>
           {orderedModules.map((module) => {
             const moduleProgress = progress.find((item) => item.moduleId === module.id)
             const state = moduleProgress?.status ?? 'locked'
 
             return (
-              <li key={module.id}>
+              <li data-state={state} key={module.id}>
                 <span>{module.title}</span>
                 <span>{stateLabel(state)}</span>
               </li>
@@ -246,18 +262,20 @@ export function LearnerFlow({
       </section>
 
       {currentModule ? (
-        <section aria-labelledby="module-title">
+        <section className="module-card" aria-labelledby="module-title">
+          <div className="module-card__meta">{currentModule.estimatedMinutes} min</div>
           <h2 id="module-title">{currentModule.title}</h2>
-          <p>{currentModule.estimatedMinutes} min</p>
-          {currentModule.content.map((item) => (
-            <p key={item}>{item}</p>
-          ))}
+          <div className="module-card__content">
+            {currentModule.content.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
 
           {currentModule.action?.type === 'quiz' ? (
-            <fieldset>
+            <fieldset className="knowledge-check">
               <legend>{currentModule.action.prompt}</legend>
               {currentModule.action.choices.map((choice) => (
-                <label key={choice}>
+                <label data-selected={selectedAnswer === choice} key={choice}>
                   <input
                     checked={selectedAnswer === choice}
                     name="knowledge-check"
@@ -267,12 +285,13 @@ export function LearnerFlow({
                   {choice}
                 </label>
               ))}
-              <button disabled={!selectedAnswer || submitting} onClick={submitQuiz} type="button">
+              <button className="module-card__action" disabled={!selectedAnswer || submitting} onClick={submitQuiz} type="button">
                 {submitting ? 'Saving' : 'Submit answer'}
               </button>
             </fieldset>
           ) : (
-            <div>
+            <div className="practice-card">
+              <p>{currentModule.action?.prompt}</p>
               <label>
                 Practice response
                 <textarea
@@ -281,8 +300,7 @@ export function LearnerFlow({
                   value={practiceResponse}
                 />
               </label>
-              <p>{currentModule.action?.prompt}</p>
-              <button disabled={!practiceResponse.trim() || submitting} onClick={submitPractice} type="button">
+              <button className="module-card__action" disabled={!practiceResponse.trim() || submitting} onClick={submitPractice} type="button">
                 {submitting ? 'Saving' : 'Submit practice'}
               </button>
             </div>
