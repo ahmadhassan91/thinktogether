@@ -352,6 +352,17 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.deck-form__actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.deck-form__actions button[type='button'] {
+  border: 2px solid var(--tt-orange);
+  background: #fff7ef;
+  color: var(--tt-orange);
+}
+
 .deck-form__hint {
   margin: 0;
   font-size: 0.9rem;
@@ -383,6 +394,20 @@
   font-weight: 750;
 }
 
+.deck-outline__rail {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.deck-outline__rail span {
+  border-left: 0.25rem solid var(--tt-orange);
+  background: #fffaf0;
+  color: var(--tt-dark);
+  font-weight: 850;
+  padding: 0.65rem 0.75rem;
+}
+
 @media (min-width: 48rem) {
   .app-hero {
     grid-template-columns: minmax(0, 1.8fr) minmax(20rem, 0.8fr);
@@ -390,6 +415,10 @@
   }
 
   .plan-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .deck-form__actions {
     grid-template-columns: 1fr 1fr;
   }
 }

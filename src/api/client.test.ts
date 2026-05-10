@@ -5,6 +5,7 @@ import {
   createAdminLearner,
   createAiDeckOutline,
   createLearnerInvite,
+  downloadAiDeckPptx,
   downloadAdminExport,
   getAdminCohorts,
   getAdminLearners,
@@ -178,7 +179,7 @@ describe('admin management client', () => {
     expect(click).toHaveBeenCalled()
   })
 
-  it('loads AI providers and posts deck outline requests with auth headers', async () => {
+  it('loads AI providers, posts deck outlines, and downloads PPTX with auth headers', async () => {
     storeToken('admin-token')
     fetchMock
       .mockResolvedValueOnce(json({
@@ -188,6 +189,10 @@ describe('admin management client', () => {
         outline: { title: 'PBIS Refresher', provider: 'gemini', slides: [] },
         provider: { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
       }))
+      .mockResolvedValueOnce(Promise.resolve(new Response(new Blob(['pptx']), {
+        status: 201,
+        headers: { 'content-disposition': 'attachment; filename="pbis-refresher.pptx"' },
+      })))
 
     await expect(getAiProviders()).resolves.toMatchObject({
       providers: [{ id: 'gemini', configured: true }],
@@ -199,6 +204,13 @@ describe('admin management client', () => {
       durationMinutes: 45,
       slideCount: 6,
     })).resolves.toMatchObject({ outline: { title: 'PBIS Refresher' } })
+    await downloadAiDeckPptx({
+      provider: 'gemini',
+      topic: 'PBIS refresher for program leaders',
+      audience: 'Program leaders',
+      durationMinutes: 45,
+      slideCount: 6,
+    })
 
     expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers')
     const deckInit = fetchMock.mock.calls[1][1] as RequestInit
@@ -212,6 +224,10 @@ describe('admin management client', () => {
       slideCount: 6,
     }))
     expect((deckInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
+    const pptxInit = fetchMock.mock.calls[2][1] as RequestInit
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/ai/deck-pptx')
+    expect(pptxInit.method).toBe('POST')
+    expect((pptxInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
   })
 })
 

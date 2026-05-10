@@ -77,7 +77,8 @@ beforeEach(() => {
       return json({
         providers: [
           { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
-          { id: 'kimi', label: 'Kimi K2.6 via NVIDIA', configured: true, mode: 'async-recommended', note: 'Slow draft' },
+          { id: 'claude', label: 'Claude Sonnet', configured: false, mode: 'sync', note: 'Premium planner' },
+          { id: 'kimi', label: 'Kimi K2.6 via NVIDIA', configured: true, mode: 'async-required', note: 'Async only' },
           { id: 'notebooklm_enterprise', label: 'NotebookLM Enterprise', configured: false, mode: 'source-workspace', note: 'Source workspace' },
         ],
       })
@@ -140,7 +141,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Plan' }))
     expect(screen.getByRole('heading', { name: 'MVP and Phase 2 Milestones' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Training Deck Studio' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Generate deck outline' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Generate preview' }))
     expect(await screen.findByRole('heading', { name: 'Effective Lesson Delivery' })).toBeInTheDocument()
   })
 

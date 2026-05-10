@@ -9,6 +9,7 @@ import {
   createAdminCohort,
   createAdminLearner,
   createLearnerInvite,
+  downloadAiDeckPptx,
   downloadAdminExport,
   getAdminDashboard,
   getAdminCohorts,
@@ -484,6 +485,7 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
   const [slideCount, setSlideCount] = useState(6)
   const [outline, setOutline] = useState<AiDeckOutline | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isDownloadingPptx, setIsDownloadingPptx] = useState(false)
   const [deckError, setDeckError] = useState('')
 
   useEffect(() => {
@@ -509,6 +511,18 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
+  const handleDownloadPptx = async () => {
+    setDeckError('')
+    setIsDownloadingPptx(true)
+    try {
+      await downloadAiDeckPptx({ provider, topic, audience, durationMinutes, slideCount })
+    } catch (error) {
+      setDeckError(error instanceof Error ? error.message : 'Unable to generate PowerPoint.')
+    } finally {
+      setIsDownloadingPptx(false)
+    }
+  }
+
   return (
     <main className="plan-view" aria-labelledby="plan-title">
       <header>
@@ -531,8 +545,8 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
             <p className="app-hero__label">Phase 2 AI deck generator</p>
             <h2 id="deck-studio-title">Training Deck Studio</h2>
             <p>
-              Generate a source-grounded, facilitator-led deck outline from the PBIS and SOP artifacts.
-              Gemini is the fast default; Kimi is available for slower creative drafts.
+              Generate a source-grounded facilitator deck and export an editable PowerPoint using the PBIS and SOP artifacts.
+              Gemini is the live default; Claude can be enabled after billing credits are added.
             </p>
           </div>
 
@@ -549,7 +563,8 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
               Provider
               <select value={provider} onChange={(event) => setProvider(event.target.value as AiDeckProvider)}>
                 <option value="gemini">Gemini Flash</option>
-                <option value="kimi">Kimi K2.6 via NVIDIA</option>
+                <option value="claude">Claude Sonnet</option>
+                <option value="kimi">Kimi K2.6 via NVIDIA - async only</option>
               </select>
             </label>
             <label>
@@ -582,12 +597,21 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
                 />
               </label>
             </div>
-            {selectedProvider?.mode === 'async-recommended' ? (
-              <p className="deck-form__hint">Kimi can take over a minute; production should run it as a background job.</p>
+            {selectedProvider?.mode === 'async-required' ? (
+              <p className="deck-form__hint">This provider is configured for background jobs only. Use Gemini for live export.</p>
             ) : null}
-            <button disabled={isGenerating || !selectedProvider?.configured || topic.length < 8} type="submit">
-              {isGenerating ? 'Generating outline' : 'Generate deck outline'}
-            </button>
+            <div className="deck-form__actions">
+              <button disabled={isGenerating || !selectedProvider?.configured || selectedProvider.mode !== 'sync' || topic.length < 8} type="submit">
+                {isGenerating ? 'Generating preview' : 'Generate preview'}
+              </button>
+              <button
+                disabled={isDownloadingPptx || !selectedProvider?.configured || selectedProvider.mode !== 'sync' || topic.length < 8}
+                onClick={handleDownloadPptx}
+                type="button"
+              >
+                {isDownloadingPptx ? 'Building PowerPoint' : 'Download PowerPoint'}
+              </button>
+            </div>
             {deckError ? <p role="alert">{deckError}</p> : null}
           </form>
 
@@ -597,6 +621,11 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
                 <p className="app-hero__label">{outline.provider} · {outline.model}</p>
                 <h3 id="deck-outline-title">{outline.title}</h3>
                 <p>{outline.durationMinutes} minutes for {outline.audience}</p>
+              </div>
+              <div className="deck-outline__rail" aria-label="Generated deck summary">
+                <span>{outline.slides.length} editable slides</span>
+                <span>{outline.sourceArtifacts.length} source artifacts</span>
+                <span>Human review required</span>
               </div>
               <ol>
                 {outline.slides.map((slide, index) => (

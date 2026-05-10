@@ -142,13 +142,13 @@ export type ScenarioScorePayload = {
   sourceBasis: string[]
 }
 
-export type AiDeckProvider = 'gemini' | 'kimi'
+export type AiDeckProvider = 'gemini' | 'claude' | 'kimi'
 
 export type AiProviderStatus = {
   id: AiDeckProvider | 'notebooklm_enterprise'
   label: string
   configured: boolean
-  mode: 'sync' | 'async-recommended' | 'source-workspace'
+  mode: 'sync' | 'async-required' | 'source-workspace'
   note: string
 }
 
@@ -319,6 +319,40 @@ export async function createAiDeckOutline(input: AiDeckOutlineInput) {
     method: 'POST',
     body: JSON.stringify(input),
   })
+}
+
+export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
+  const headers = new Headers()
+  headers.set('content-type', 'application/json')
+  const token = readStoredToken()
+  if (token) {
+    headers.set('authorization', `Bearer ${token}`)
+  }
+
+  const response = await fetch(apiUrl('/api/ai/deck-pptx'), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearToken()
+    }
+    const error = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(error?.error ?? `Request failed: ${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const disposition = response.headers.get('content-disposition') ?? ''
+  const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? 'think-together-training-deck.pptx'
+  const url = window.URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  document.body.append(anchor)
+  anchor.click()
+  anchor.remove()
+  window.URL.revokeObjectURL(url)
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
