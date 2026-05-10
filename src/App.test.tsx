@@ -73,6 +73,41 @@ beforeEach(() => {
         ],
       })
     }
+    if (url.endsWith('/api/ai/providers')) {
+      return json({
+        providers: [
+          { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
+          { id: 'kimi', label: 'Kimi K2.6 via NVIDIA', configured: true, mode: 'async-recommended', note: 'Slow draft' },
+          { id: 'notebooklm_enterprise', label: 'NotebookLM Enterprise', configured: false, mode: 'source-workspace', note: 'Source workspace' },
+        ],
+      })
+    }
+    if (url.endsWith('/api/ai/deck-outline')) {
+      return json({
+        outline: {
+          provider: 'gemini',
+          model: 'gemini-test',
+          title: 'Effective Lesson Delivery',
+          audience: 'Program leaders',
+          durationMinutes: 45,
+          learningObjectives: ['Practice 10:2 delivery'],
+          slides: [
+            {
+              title: 'Open with practice',
+              objective: 'Use PBIS language in a short routine.',
+              talkingPoints: ['Teach expectation'],
+              activityPrompt: 'Pair practice an attention getter.',
+              facilitatorNotes: 'Keep it human-led.',
+              sourceRefs: [{ artifact: 'PBIS PPT Master.pptx', locator: 'Slide 4' }],
+            },
+          ],
+          handoffNotes: ['Review before export.'],
+          sourceArtifacts: ['PBIS PPT Master.pptx', 'SOP_Program Induction.pdf'],
+          generatedAt: '2026-05-10T00:00:00.000Z',
+        },
+        provider: { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
+      })
+    }
     return json({})
   }))
 })
@@ -104,6 +139,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Plan' }))
     expect(screen.getByRole('heading', { name: 'MVP and Phase 2 Milestones' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Training Deck Studio' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Generate deck outline' }))
+    expect(await screen.findByRole('heading', { name: 'Effective Lesson Delivery' })).toBeInTheDocument()
   })
 
   it('uses learner profile from getMe and skips admin calls for learner users', async () => {

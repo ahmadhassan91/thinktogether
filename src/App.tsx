@@ -5,6 +5,7 @@ import {
   answerKnowledgeCheck,
   clearToken,
   completeModule,
+  createAiDeckOutline,
   createAdminCohort,
   createAdminLearner,
   createLearnerInvite,
@@ -12,6 +13,7 @@ import {
   getAdminDashboard,
   getAdminCohorts,
   getAdminLearners,
+  getAiProviders,
   getLearningPath,
   getMe,
   getProgress,
@@ -22,6 +24,9 @@ import {
   type AdminCohort,
   type AdminDashboardPayload,
   type AdminLearner,
+  type AiDeckOutline,
+  type AiDeckProvider,
+  type AiProviderStatus,
   type AuthUser,
   type LearningPathPayload,
   type LearnerProfile,
@@ -391,7 +396,7 @@ function renderView({
   }
 
   if (view === 'plan') {
-    return <MilestonePlan />
+    return <MilestonePlan isAdmin={isAdmin} />
   }
 
   return (
@@ -468,9 +473,41 @@ function toCoachScenario(payload: LearningPathPayload): CoachScenario {
   }
 }
 
-function MilestonePlan() {
+function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
   const mvp = getMilestonesByPhase('MVP')
   const phaseTwo = getMilestonesByPhase('Phase 2')
+  const [providers, setProviders] = useState<AiProviderStatus[]>([])
+  const [provider, setProvider] = useState<AiDeckProvider>('gemini')
+  const [topic, setTopic] = useState('Effective lesson delivery with 10:2 practice')
+  const [audience, setAudience] = useState('Think Together program leaders')
+  const [durationMinutes, setDurationMinutes] = useState(45)
+  const [slideCount, setSlideCount] = useState(6)
+  const [outline, setOutline] = useState<AiDeckOutline | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [deckError, setDeckError] = useState('')
+
+  useEffect(() => {
+    if (!isAdmin) return
+    void getAiProviders()
+      .then((payload) => setProviders(payload.providers))
+      .catch((error) => setDeckError(error instanceof Error ? error.message : 'Unable to load AI providers.'))
+  }, [isAdmin])
+
+  const selectedProvider = providers.find((item) => item.id === provider)
+
+  const handleGenerateDeck = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setDeckError('')
+    setIsGenerating(true)
+    try {
+      const payload = await createAiDeckOutline({ provider, topic, audience, durationMinutes, slideCount })
+      setOutline(payload.outline)
+    } catch (error) {
+      setDeckError(error instanceof Error ? error.message : 'Unable to generate deck outline.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   return (
     <main className="plan-view" aria-labelledby="plan-title">
@@ -487,6 +524,96 @@ function MilestonePlan() {
         <MilestoneList title="MVP" milestones={mvp} status="current" />
         <MilestoneList title="Phase 2" milestones={phaseTwo} status="locked" />
       </section>
+
+      {isAdmin ? (
+        <section className="deck-studio" aria-labelledby="deck-studio-title">
+          <div>
+            <p className="app-hero__label">Phase 2 AI deck generator</p>
+            <h2 id="deck-studio-title">Training Deck Studio</h2>
+            <p>
+              Generate a source-grounded, facilitator-led deck outline from the PBIS and SOP artifacts.
+              Gemini is the fast default; Kimi is available for slower creative drafts.
+            </p>
+          </div>
+
+          <div className="provider-strip" aria-label="AI provider status">
+            {providers.map((item) => (
+              <span data-configured={item.configured} key={item.id} title={item.note}>
+                {item.label}: {item.configured ? 'ready' : 'needs key'}
+              </span>
+            ))}
+          </div>
+
+          <form className="deck-form" onSubmit={handleGenerateDeck}>
+            <label>
+              Provider
+              <select value={provider} onChange={(event) => setProvider(event.target.value as AiDeckProvider)}>
+                <option value="gemini">Gemini Flash</option>
+                <option value="kimi">Kimi K2.6 via NVIDIA</option>
+              </select>
+            </label>
+            <label>
+              Topic
+              <input value={topic} onChange={(event) => setTopic(event.target.value)} />
+            </label>
+            <label>
+              Audience
+              <input value={audience} onChange={(event) => setAudience(event.target.value)} />
+            </label>
+            <div className="deck-form__row">
+              <label>
+                Minutes
+                <input
+                  min={10}
+                  max={180}
+                  type="number"
+                  value={durationMinutes}
+                  onChange={(event) => setDurationMinutes(Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Slides
+                <input
+                  min={4}
+                  max={14}
+                  type="number"
+                  value={slideCount}
+                  onChange={(event) => setSlideCount(Number(event.target.value))}
+                />
+              </label>
+            </div>
+            {selectedProvider?.mode === 'async-recommended' ? (
+              <p className="deck-form__hint">Kimi can take over a minute; production should run it as a background job.</p>
+            ) : null}
+            <button disabled={isGenerating || !selectedProvider?.configured || topic.length < 8} type="submit">
+              {isGenerating ? 'Generating outline' : 'Generate deck outline'}
+            </button>
+            {deckError ? <p role="alert">{deckError}</p> : null}
+          </form>
+
+          {outline ? (
+            <section className="deck-outline" aria-labelledby="deck-outline-title">
+              <div>
+                <p className="app-hero__label">{outline.provider} · {outline.model}</p>
+                <h3 id="deck-outline-title">{outline.title}</h3>
+                <p>{outline.durationMinutes} minutes for {outline.audience}</p>
+              </div>
+              <ol>
+                {outline.slides.map((slide, index) => (
+                  <li key={`${slide.title}-${index}`}>
+                    <strong>{index + 1}. {slide.title}</strong>
+                    <span>{slide.objective}</span>
+                    <small>{slide.activityPrompt}</small>
+                  </li>
+                ))}
+              </ol>
+              <div className="source-list">
+                {outline.sourceArtifacts.map((artifact) => <span key={artifact}>{artifact}</span>)}
+              </div>
+            </section>
+          ) : null}
+        </section>
+      ) : null}
     </main>
   )
 }

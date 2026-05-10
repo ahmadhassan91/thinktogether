@@ -142,6 +142,44 @@ export type ScenarioScorePayload = {
   sourceBasis: string[]
 }
 
+export type AiDeckProvider = 'gemini' | 'kimi'
+
+export type AiProviderStatus = {
+  id: AiDeckProvider | 'notebooklm_enterprise'
+  label: string
+  configured: boolean
+  mode: 'sync' | 'async-recommended' | 'source-workspace'
+  note: string
+}
+
+export type AiDeckOutlineInput = {
+  provider: AiDeckProvider
+  topic: string
+  audience: string
+  durationMinutes: number
+  slideCount: number
+}
+
+export type AiDeckOutline = {
+  provider: AiDeckProvider
+  model: string
+  title: string
+  audience: string
+  durationMinutes: number
+  learningObjectives: string[]
+  slides: Array<{
+    title: string
+    objective: string
+    talkingPoints: string[]
+    activityPrompt: string
+    facilitatorNotes: string
+    sourceRefs: Array<{ artifact: string; locator: string }>
+  }>
+  handoffNotes: string[]
+  sourceArtifacts: string[]
+  generatedAt: string
+}
+
 export function readStoredToken() {
   return window.localStorage.getItem(TOKEN_KEY)
 }
@@ -269,6 +307,17 @@ export async function createAdminCohort(cohort: AdminCohortInput) {
   return request<{ cohort: AdminCohort }>('/api/admin/cohorts', {
     method: 'POST',
     body: JSON.stringify(cohort),
+  })
+}
+
+export async function getAiProviders() {
+  return request<{ providers: AiProviderStatus[] }>('/api/ai/providers')
+}
+
+export async function createAiDeckOutline(input: AiDeckOutlineInput) {
+  return request<{ outline: AiDeckOutline; provider: AiProviderStatus }>('/api/ai/deck-outline', {
+    method: 'POST',
+    body: JSON.stringify(input),
   })
 }
 

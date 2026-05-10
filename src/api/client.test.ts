@@ -3,10 +3,12 @@ import {
   acceptInvite,
   createAdminCohort,
   createAdminLearner,
+  createAiDeckOutline,
   createLearnerInvite,
   downloadAdminExport,
   getAdminCohorts,
   getAdminLearners,
+  getAiProviders,
   getMe,
   revokeLearnerInvite,
   storeToken,
@@ -174,6 +176,42 @@ describe('admin management client', () => {
     expect(anchor.href).toBe('blob:export')
     expect(anchor.download).toBe('think-completion-export.csv')
     expect(click).toHaveBeenCalled()
+  })
+
+  it('loads AI providers and posts deck outline requests with auth headers', async () => {
+    storeToken('admin-token')
+    fetchMock
+      .mockResolvedValueOnce(json({
+        providers: [{ id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' }],
+      }))
+      .mockResolvedValueOnce(json({
+        outline: { title: 'PBIS Refresher', provider: 'gemini', slides: [] },
+        provider: { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
+      }))
+
+    await expect(getAiProviders()).resolves.toMatchObject({
+      providers: [{ id: 'gemini', configured: true }],
+    })
+    await expect(createAiDeckOutline({
+      provider: 'gemini',
+      topic: 'PBIS refresher for program leaders',
+      audience: 'Program leaders',
+      durationMinutes: 45,
+      slideCount: 6,
+    })).resolves.toMatchObject({ outline: { title: 'PBIS Refresher' } })
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers')
+    const deckInit = fetchMock.mock.calls[1][1] as RequestInit
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/deck-outline')
+    expect(deckInit.method).toBe('POST')
+    expect(deckInit.body).toBe(JSON.stringify({
+      provider: 'gemini',
+      topic: 'PBIS refresher for program leaders',
+      audience: 'Program leaders',
+      durationMinutes: 45,
+      slideCount: 6,
+    }))
+    expect((deckInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
   })
 })
 
