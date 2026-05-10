@@ -488,6 +488,12 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
   const [isDownloadingPptx, setIsDownloadingPptx] = useState(false)
   const [deckError, setDeckError] = useState('')
 
+  const deckProviders = useMemo(
+    () => providers.filter((item): item is AiProviderStatus & { id: AiDeckProvider } =>
+      item.id === 'openai' || item.id === 'gemini' || item.id === 'claude'),
+    [providers],
+  )
+
   useEffect(() => {
     if (!isAdmin) return
     void getAiProviders()
@@ -495,7 +501,15 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
       .catch((error) => setDeckError(error instanceof Error ? error.message : 'Unable to load AI providers.'))
   }, [isAdmin])
 
-  const selectedProvider = providers.find((item) => item.id === provider)
+  useEffect(() => {
+    if (deckProviders.length === 0 || deckProviders.some((item) => item.id === provider)) return
+    const fallback = deckProviders.find((item) => item.id === 'openai' && item.configured)
+      ?? deckProviders.find((item) => item.id === 'gemini' && item.configured)
+      ?? deckProviders[0]
+    setProvider(fallback.id)
+  }, [deckProviders, provider])
+
+  const selectedProvider = deckProviders.find((item) => item.id === provider)
 
   const handleGenerateDeck = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -551,7 +565,7 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
           </div>
 
           <div className="provider-strip" aria-label="AI provider status">
-            {providers.map((item) => (
+            {deckProviders.map((item) => (
               <span data-configured={item.configured} key={item.id} title={item.note}>
                 {item.label}: {item.configured ? 'ready' : 'needs key'}
               </span>
