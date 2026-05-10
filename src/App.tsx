@@ -478,7 +478,7 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
   const mvp = getMilestonesByPhase('MVP')
   const phaseTwo = getMilestonesByPhase('Phase 2')
   const [providers, setProviders] = useState<AiProviderStatus[]>([])
-  const [provider, setProvider] = useState<AiDeckProvider>('gemini')
+  const [provider, setProvider] = useState<AiDeckProvider>('openai')
   const [topic, setTopic] = useState('Effective lesson delivery with 10:2 practice')
   const [audience, setAudience] = useState('Think Together program leaders')
   const [durationMinutes, setDurationMinutes] = useState(45)
@@ -546,7 +546,7 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
             <h2 id="deck-studio-title">Training Deck Studio</h2>
             <p>
               Generate a source-grounded facilitator deck and export an editable PowerPoint using the PBIS and SOP artifacts.
-              Gemini is the live default; Claude can be enabled after billing credits are added.
+              OpenAI GPT-5.2 is the premium default; Gemini remains available as the fast fallback.
             </p>
           </div>
 
@@ -562,9 +562,9 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
             <label>
               Provider
               <select value={provider} onChange={(event) => setProvider(event.target.value as AiDeckProvider)}>
+                <option value="openai">OpenAI GPT-5.2</option>
                 <option value="gemini">Gemini Flash</option>
                 <option value="claude">Claude Sonnet</option>
-                <option value="kimi">Kimi K2.6 via NVIDIA - async only</option>
               </select>
             </label>
             <label>
@@ -597,9 +597,6 @@ function MilestonePlan({ isAdmin }: { isAdmin: boolean }) {
                 />
               </label>
             </div>
-            {selectedProvider?.mode === 'async-required' ? (
-              <p className="deck-form__hint">This provider is configured for background jobs only. Use Gemini for live export.</p>
-            ) : null}
             <div className="deck-form__actions">
               <button disabled={isGenerating || !selectedProvider?.configured || selectedProvider.mode !== 'sync' || topic.length < 8} type="submit">
                 {isGenerating ? 'Generating preview' : 'Generate preview'}

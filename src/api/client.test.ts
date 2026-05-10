@@ -183,11 +183,11 @@ describe('admin management client', () => {
     storeToken('admin-token')
     fetchMock
       .mockResolvedValueOnce(json({
-        providers: [{ id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' }],
+        providers: [{ id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' }],
       }))
       .mockResolvedValueOnce(json({
-        outline: { title: 'PBIS Refresher', provider: 'gemini', slides: [] },
-        provider: { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
+        outline: { title: 'PBIS Refresher', provider: 'openai', slides: [] },
+        provider: { id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' },
       }))
       .mockResolvedValueOnce(Promise.resolve(new Response(new Blob(['pptx']), {
         status: 201,
@@ -195,17 +195,17 @@ describe('admin management client', () => {
       })))
 
     await expect(getAiProviders()).resolves.toMatchObject({
-      providers: [{ id: 'gemini', configured: true }],
+      providers: [{ id: 'openai', configured: true }],
     })
     await expect(createAiDeckOutline({
-      provider: 'gemini',
+      provider: 'openai',
       topic: 'PBIS refresher for program leaders',
       audience: 'Program leaders',
       durationMinutes: 45,
       slideCount: 6,
     })).resolves.toMatchObject({ outline: { title: 'PBIS Refresher' } })
     await downloadAiDeckPptx({
-      provider: 'gemini',
+      provider: 'openai',
       topic: 'PBIS refresher for program leaders',
       audience: 'Program leaders',
       durationMinutes: 45,
@@ -217,7 +217,7 @@ describe('admin management client', () => {
     expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/deck-outline')
     expect(deckInit.method).toBe('POST')
     expect(deckInit.body).toBe(JSON.stringify({
-      provider: 'gemini',
+      provider: 'openai',
       topic: 'PBIS refresher for program leaders',
       audience: 'Program leaders',
       durationMinutes: 45,

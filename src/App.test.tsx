@@ -76,9 +76,9 @@ beforeEach(() => {
     if (url.endsWith('/api/ai/providers')) {
       return json({
         providers: [
+          { id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' },
           { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
           { id: 'claude', label: 'Claude Sonnet', configured: false, mode: 'sync', note: 'Premium planner' },
-          { id: 'kimi', label: 'Kimi K2.6 via NVIDIA', configured: true, mode: 'async-required', note: 'Async only' },
           { id: 'notebooklm_enterprise', label: 'NotebookLM Enterprise', configured: false, mode: 'source-workspace', note: 'Source workspace' },
         ],
       })
@@ -86,8 +86,8 @@ beforeEach(() => {
     if (url.endsWith('/api/ai/deck-outline')) {
       return json({
         outline: {
-          provider: 'gemini',
-          model: 'gemini-test',
+          provider: 'openai',
+          model: 'gpt-5.2-test',
           title: 'Effective Lesson Delivery',
           audience: 'Program leaders',
           durationMinutes: 45,
@@ -106,7 +106,7 @@ beforeEach(() => {
           sourceArtifacts: ['PBIS PPT Master.pptx', 'SOP_Program Induction.pdf'],
           generatedAt: '2026-05-10T00:00:00.000Z',
         },
-        provider: { id: 'gemini', label: 'Gemini Flash', configured: true, mode: 'sync', note: 'Fast default' },
+        provider: { id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' },
       })
     }
     return json({})
