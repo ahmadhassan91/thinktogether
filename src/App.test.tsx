@@ -83,8 +83,12 @@ beforeEach(() => {
         ],
       })
     }
-    if (url.endsWith('/api/ai/deck-outline')) {
+    if (url.endsWith('/api/ai/deck-outline-jobs')) {
+      return json({ job: { id: 'outline-job-1', status: 'queued' } })
+    }
+    if (url.endsWith('/api/ai/deck-outline-jobs/outline-job-1')) {
       return json({
+        job: { id: 'outline-job-1', status: 'ready' },
         outline: {
           provider: 'openai',
           model: 'gpt-5.2-test',

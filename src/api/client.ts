@@ -316,10 +316,41 @@ export async function getAiProviders() {
 }
 
 export async function createAiDeckOutline(input: AiDeckOutlineInput) {
-  return request<{ outline: AiDeckOutline; provider: AiProviderStatus }>('/api/ai/deck-outline', {
+  const jobPayload = await request<{
+    job: {
+      id: string
+      status: 'queued' | 'running' | 'ready' | 'failed'
+      error?: string
+    }
+  }>('/api/ai/deck-outline-jobs', {
     method: 'POST',
     body: JSON.stringify(input),
   })
+  const jobId = jobPayload.job.id
+  let status = jobPayload.job.status
+  let error = jobPayload.job.error
+
+  for (let attempt = 0; attempt < 75 && status !== 'ready' && status !== 'failed'; attempt += 1) {
+    const payload = await request<{
+      job: {
+        id: string
+        status: 'queued' | 'running' | 'ready' | 'failed'
+        error?: string
+      }
+      outline?: AiDeckOutline
+      provider?: AiProviderStatus
+    }>(`/api/ai/deck-outline-jobs/${jobId}`)
+    status = payload.job.status
+    error = payload.job.error
+    if (payload.outline && payload.provider) {
+      return { outline: payload.outline, provider: payload.provider }
+    }
+    if (status !== 'ready' && status !== 'failed') {
+      await delay(2000)
+    }
+  }
+
+  throw new Error(error ?? 'Deck preview generation timed out. Please try again.')
 }
 
 export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
@@ -338,7 +369,6 @@ export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
   let error = jobPayload.job.error
 
   for (let attempt = 0; attempt < 75 && status !== 'ready' && status !== 'failed'; attempt += 1) {
-    await delay(2000)
     const payload = await request<{
       job: {
         id: string
@@ -348,6 +378,9 @@ export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
     }>(`/api/ai/deck-jobs/${jobId}`)
     status = payload.job.status
     error = payload.job.error
+    if (status !== 'ready' && status !== 'failed') {
+      await delay(2000)
+    }
   }
 
   if (status !== 'ready') {

@@ -186,6 +186,10 @@ describe('admin management client', () => {
         providers: [{ id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' }],
       }))
       .mockResolvedValueOnce(json({
+        job: { id: 'outline-job-1', status: 'running' },
+      }))
+      .mockResolvedValueOnce(json({
+        job: { id: 'outline-job-1', status: 'ready' },
         outline: { title: 'PBIS Refresher', provider: 'openai', slides: [] },
         provider: { id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' },
       }))
@@ -217,7 +221,7 @@ describe('admin management client', () => {
 
     expect(fetchMock.mock.calls[0][0]).toBe('/api/ai/providers')
     const deckInit = fetchMock.mock.calls[1][1] as RequestInit
-    expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/deck-outline')
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/ai/deck-outline-jobs')
     expect(deckInit.method).toBe('POST')
     expect(deckInit.body).toBe(JSON.stringify({
       provider: 'openai',
@@ -227,8 +231,9 @@ describe('admin management client', () => {
       slideCount: 6,
     }))
     expect((deckInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
-    const jobInit = fetchMock.mock.calls[2][1] as RequestInit
-    expect(fetchMock.mock.calls[2][0]).toBe('/api/ai/deck-jobs')
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/ai/deck-outline-jobs/outline-job-1')
+    const jobInit = fetchMock.mock.calls[3][1] as RequestInit
+    expect(fetchMock.mock.calls[3][0]).toBe('/api/ai/deck-jobs')
     expect(jobInit.method).toBe('POST')
     expect(jobInit.body).toBe(JSON.stringify({
       provider: 'openai',
@@ -238,8 +243,8 @@ describe('admin management client', () => {
       slideCount: 6,
     }))
     expect((jobInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
-    const pptxInit = fetchMock.mock.calls[3][1] as RequestInit
-    expect(fetchMock.mock.calls[3][0]).toBe('/api/ai/deck-jobs/deck-job-1/pptx')
+    const pptxInit = fetchMock.mock.calls[4][1] as RequestInit
+    expect(fetchMock.mock.calls[4][0]).toBe('/api/ai/deck-jobs/deck-job-1/pptx')
     expect((pptxInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
   })
 })
