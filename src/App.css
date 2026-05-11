@@ -170,18 +170,11 @@
   text-align: left;
 }
 
-.login-panel::before {
-  content: 'TT';
-  display: inline-grid;
-  width: 4rem;
-  height: 4rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: var(--tt-orange);
-  color: var(--tt-white);
-  font-size: 1.35rem;
-  font-weight: 950;
+.login-panel__logo {
+  display: block;
+  width: min(13rem, 70%);
+  height: auto;
+  object-fit: contain;
 }
 
 .login-panel h1 {
@@ -480,15 +473,11 @@
 }
 
 .app-sidebar__logo {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  display: block;
+  width: 8.5rem;
+  height: auto;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 10px;
-  background: var(--tt-orange);
-  color: var(--tt-white);
-  font-weight: 950;
+  object-fit: contain;
 }
 
 .app-sidebar__nav {

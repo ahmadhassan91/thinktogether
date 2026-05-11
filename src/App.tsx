@@ -40,6 +40,7 @@ import { ScenarioCoach } from './features/coach/ScenarioCoach'
 import type { CoachScenario } from './features/coach/coachEngine'
 import { LearnerFlow } from './features/learner/LearnerFlow'
 import type { Learner, LearnerModule } from './features/learner/learnerProgress'
+import thinkTogetherLogo from './assets/think-together-logo.png'
 
 type WorkspaceView = 'learner' | 'practice' | 'admin' | 'plan'
 
@@ -167,6 +168,7 @@ function App() {
       return (
         <div className="app-shell">
           <main className="login-panel" aria-labelledby="invite-title">
+            <img className="login-panel__logo" src={thinkTogetherLogo} alt="Think Together logo" />
             <p className="app-hero__label">Think Together Training MVP</p>
             <h1 id="invite-title">Accept invite</h1>
             <p>Create your password to start Program Induction - PBIS.</p>
@@ -195,6 +197,7 @@ function App() {
     return (
       <div className="app-shell">
         <main className="login-panel" aria-labelledby="login-title">
+          <img className="login-panel__logo" src={thinkTogetherLogo} alt="Think Together logo" />
           <p className="app-hero__label">Think Together Training MVP</p>
           <h1 id="login-title">Sign in</h1>
           <form onSubmit={handleLogin}>
@@ -234,7 +237,7 @@ function App() {
     <div className="app-shell app-shell--workspace">
       <aside className="app-sidebar" aria-label="Workspace navigation">
         <div className="app-sidebar__brand">
-          <div className="app-sidebar__logo" aria-hidden="true">TT</div>
+          <img className="app-sidebar__logo" src={thinkTogetherLogo} alt="" aria-hidden="true" />
           <div>
             <p>Think Together</p>
             <strong>Training Operations</strong>
