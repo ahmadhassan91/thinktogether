@@ -189,8 +189,11 @@ describe('admin management client', () => {
         outline: { title: 'PBIS Refresher', provider: 'openai', slides: [] },
         provider: { id: 'openai', label: 'OpenAI GPT-5.2', configured: true, mode: 'sync', note: 'Premium planner' },
       }))
+      .mockResolvedValueOnce(json({
+        job: { id: 'deck-job-1', status: 'ready' },
+      }))
       .mockResolvedValueOnce(Promise.resolve(new Response(new Blob(['pptx']), {
-        status: 201,
+        status: 200,
         headers: { 'content-disposition': 'attachment; filename="pbis-refresher.pptx"' },
       })))
 
@@ -224,9 +227,19 @@ describe('admin management client', () => {
       slideCount: 6,
     }))
     expect((deckInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
-    const pptxInit = fetchMock.mock.calls[2][1] as RequestInit
-    expect(fetchMock.mock.calls[2][0]).toBe('/api/ai/deck-pptx')
-    expect(pptxInit.method).toBe('POST')
+    const jobInit = fetchMock.mock.calls[2][1] as RequestInit
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/ai/deck-jobs')
+    expect(jobInit.method).toBe('POST')
+    expect(jobInit.body).toBe(JSON.stringify({
+      provider: 'openai',
+      topic: 'PBIS refresher for program leaders',
+      audience: 'Program leaders',
+      durationMinutes: 45,
+      slideCount: 6,
+    }))
+    expect((jobInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
+    const pptxInit = fetchMock.mock.calls[3][1] as RequestInit
+    expect(fetchMock.mock.calls[3][0]).toBe('/api/ai/deck-jobs/deck-job-1/pptx')
     expect((pptxInit.headers as Headers).get('authorization')).toBe('Bearer admin-token')
   })
 })

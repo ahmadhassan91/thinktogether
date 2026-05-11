@@ -323,17 +323,45 @@ export async function createAiDeckOutline(input: AiDeckOutlineInput) {
 }
 
 export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
+  const jobPayload = await request<{
+    job: {
+      id: string
+      status: 'queued' | 'running' | 'ready' | 'failed'
+      error?: string
+    }
+  }>('/api/ai/deck-jobs', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+  const jobId = jobPayload.job.id
+  let status = jobPayload.job.status
+  let error = jobPayload.job.error
+
+  for (let attempt = 0; attempt < 75 && status !== 'ready' && status !== 'failed'; attempt += 1) {
+    await delay(2000)
+    const payload = await request<{
+      job: {
+        id: string
+        status: 'queued' | 'running' | 'ready' | 'failed'
+        error?: string
+      }
+    }>(`/api/ai/deck-jobs/${jobId}`)
+    status = payload.job.status
+    error = payload.job.error
+  }
+
+  if (status !== 'ready') {
+    throw new Error(error ?? 'PowerPoint generation timed out. Please try again.')
+  }
+
   const headers = new Headers()
-  headers.set('content-type', 'application/json')
   const token = readStoredToken()
   if (token) {
     headers.set('authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(apiUrl('/api/ai/deck-pptx'), {
-    method: 'POST',
+  const response = await fetch(apiUrl(`/api/ai/deck-jobs/${jobId}/pptx`), {
     headers,
-    body: JSON.stringify(input),
   })
   if (!response.ok) {
     if (response.status === 401) {
@@ -354,6 +382,10 @@ export async function downloadAiDeckPptx(input: AiDeckOutlineInput) {
   anchor.click()
   anchor.remove()
   window.URL.revokeObjectURL(url)
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
