@@ -184,8 +184,8 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'Program Induction - PBIS' })).toBeInTheDocument()
-    expect(screen.getByText('Real Learner')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome/i })).toHaveTextContent('Real Learner')
+    expect(screen.getByText('Program Induction - PBIS')).toBeInTheDocument()
     expect(screen.getByText('Palm Site')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Admin' })).not.toBeInTheDocument()
     await waitFor(() => {
@@ -234,7 +234,8 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
     fireEvent.click(screen.getByRole('button', { name: 'Accept invite' }))
 
-    expect(await screen.findByRole('heading', { name: 'Program Induction - PBIS' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome/i })).toBeInTheDocument()
+    expect(screen.getByText('Program Induction - PBIS')).toBeInTheDocument()
     expect(screen.getAllByText('Invited Learner').length).toBeGreaterThan(0)
     expect(window.localStorage.getItem('think-training-token')).toBe('learner-token')
     expect(fetchMock.mock.calls[0][0]).toBe('/api/auth/accept-invite')
